@@ -15,10 +15,10 @@ class Category(BaseModel):
 
 class Video(BaseModel):
     title = models.CharField(max_length=255, verbose_name='title')
-    description = models.TextField(verbose_name='description')
+    description = models.TextField(verbose_name='description',  blank=True, null=True)
     photo = models.ImageField(upload_to='videos/', verbose_name='photo')
     file = models.FileField(upload_to='videos/', verbose_name='file')
-    author = models.ForeignKey(Chanel, on_delete=models.CASCADE, verbose_name='author', related_name='chanel_videos')
+    author = models.ForeignKey(Chanel, on_delete=models.CASCADE, verbose_name='author', related_name='chanel_videos', blank=True, null=True)
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, blank=True, null=True, verbose_name='category', related_name='category_videos')
 
     class Meta:
@@ -86,3 +86,12 @@ class CommentComment(BaseModel):
 
     def __str__(self):
         return f'{self.user} - {self.comment}'
+
+class Playlist(BaseModel):
+    author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='author', related_name='user_playlists')
+    videos = models.ManyToManyField(Video, verbose_name='videos', related_name='video_playlist')
+    title = models.CharField(max_length=256)
+
+
+
+    
