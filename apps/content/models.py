@@ -65,7 +65,7 @@ class Comment(BaseModel):
 
 class CommentLike(BaseModel):
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, verbose_name='comment', related_name='comment_likes')
-    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='user', related_name='comment_likes')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='user', related_name='comment_likes')
     dislike = models.BooleanField(default=False, verbose_name='dislike')
 
     class Meta:
@@ -88,8 +88,8 @@ class CommentComment(BaseModel):
         return f'{self.user} - {self.comment}'
 
 class Playlist(BaseModel):
-    author = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='author', related_name='user_playlists')
-    videos = models.ManyToManyField(Video, verbose_name='videos', related_name='video_playlist')
+    user = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name='author', related_name='user_playlists')
+    videos = models.ManyToManyField(Video, verbose_name='videos', related_name='video_playlist', blank=True)
     title = models.CharField(max_length=256)
 
 
