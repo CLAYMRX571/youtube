@@ -3,11 +3,13 @@ from rest_framework.generics import DestroyAPIView, UpdateAPIView, RetrieveAPIVi
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .permissions import IsHasChanel, IsOwner, IsAuthor
 from rest_framework.response import Response
+from apps.accounts.models import Chanel
 from rest_framework.views import APIView
-from .serializers import VideoSerializer, CommentSerializer, CommentCommentSerializer, PlaylistSerializer
+from .serializers import VideoSerializer, CommentSerializer, CommentCommentSerializer, PlaylistSerializer, CommentRetrieveSerializer
 from .models import Video, Like, Comment, CommentLike, CommentComment, Playlist
+from apps.accounts.serializers import ChanelSmallSerializer
 
-class CreateVideo(APIView):
+class CreateVideoView(APIView):
     permission_classes = [IsAuthenticated, IsHasChanel]
     serializer_class = VideoSerializer
 
@@ -25,7 +27,7 @@ class CreateVideo(APIView):
         }
         return Response(data=data)
 
-class DeleteVideo(DestroyAPIView):
+class DeleteVideoView(DestroyAPIView):
     permission_classes = [IsOwner]
     serializer_class = VideoSerializer 
     queryset = Video.objects.filter(is_active=True)
@@ -38,22 +40,22 @@ class DeleteVideo(DestroyAPIView):
         }
         return Response(data=data)
 
-class UpdateVideo(UpdateAPIView):
+class UpdateVideoView(UpdateAPIView):
     permission_classes = [IsHasChanel, IsOwner]
     serializer_class = VideoSerializer
     queryset = Video.objects.filter(is_active=True)
 
-class RetrieveVideo(RetrieveAPIView):
+class RetrieveVideoView(RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = VideoSerializer
     queryset = Video.objects.all()
 
-class ListVideo(ListAPIView):
+class ListVideoView(ListAPIView):
     permission_classes = [AllowAny]
     serializer_class = VideoSerializer
     queryset = Video.objects.all()
 
-class LikeVideo(APIView):
+class LikeVideoView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -83,7 +85,7 @@ class LikeVideo(APIView):
             }
             return Response(data=data)
         
-class CommentVideo(CreateAPIView):
+class CommentVideoView(CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = CommentSerializer
     queryset = Comment.objects.all()
@@ -93,7 +95,7 @@ class CommentVideo(CreateAPIView):
         context["user"] = self.request.user
         return context
 
-class DeleteComment(DestroyAPIView):
+class DeleteCommentView(DestroyAPIView):
     permission_classes = [IsAuthenticated, IsAuthor]
     serializer_class = CommentSerializer
     queryset = Comment.objects.filter(is_active=True)
@@ -106,12 +108,12 @@ class DeleteComment(DestroyAPIView):
         }
         return Response(data=data)
 
-class UpdateComment(UpdateAPIView):
+class UpdateCommentView(UpdateAPIView):
     permission_classes = [IsAuthenticated, IsAuthor]
     serializer_class = CommentSerializer
     queryset = Comment.objects.filter(is_active=True)
 
-class LikeComment(APIView):
+class LikeCommentView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -146,7 +148,7 @@ class CommentCommentView(CreateAPIView):
     serializer_class = CommentCommentSerializer
     queryset = CommentComment.objects.all()
 
-class DeleteCommentComment(DestroyAPIView):
+class DeleteCommentCommentView(DestroyAPIView):
     permission_classes = [IsAuthenticated, IsAuthor]
     serializer_class = CommentCommentSerializer
     queryset = CommentComment.objects.filter(is_active=True)
@@ -159,17 +161,17 @@ class DeleteCommentComment(DestroyAPIView):
         }
         return Response(data=data)
 
-class UpdateCommentComment(UpdateAPIView):
+class UpdateCommentCommentView(UpdateAPIView):
     permission_classes = [IsAuthenticated, IsAuthor]
     serializer_class = CommentCommentSerializer
     queryset = CommentComment.objects.filter(is_active=True)
 
-class CreatePlaylist(CreateAPIView):
+class CreatePlaylistView(CreateAPIView):
     permission_classes = [IsAuthenticated]
     serializer_class = PlaylistSerializer
     queryset = Playlist.objects.all()
 
-class DeletePlaylist(DestroyAPIView):
+class DeletePlaylistView(DestroyAPIView):
     permission_classes = [IsAuthenticated, IsOwner]
     serializer_class = PlaylistSerializer
     queryset = Playlist.objects.all()
@@ -182,7 +184,7 @@ class DeletePlaylist(DestroyAPIView):
         }
         return Response(data=data)
 
-class AddVideoPlaylist(APIView):
+class AddVideoPlaylistView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
@@ -201,7 +203,7 @@ class AddVideoPlaylist(APIView):
             }
         return Response(data=data)
 
-class RemoveVideoPlaylist(APIView):
+class RemoveVideoPlaylistView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, pk):
@@ -220,4 +222,42 @@ class RemoveVideoPlaylist(APIView):
             }
         return Response(data=data)
 
+class FollowChanelView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        chanel = get_object_or_404(Chanel, id=request.data['chanel'])
+        user = request.user
+        if user in chanel.followers.all():
+            chanel.followers.remove(user)
+            data = {
+                "status": True,
+                "msg": "Chanel removed from follows"
+            }
+        else:
+            chanel.followers.add(user)
+            data = {
+                "status": True,
+                "msg": "Successfully followed"
+            }
+        return Response(data=data)
+
+class FollowedChanelListView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = ChanelSmallSerializer
+    
+    def get_queryset(self):
+        user = self.request.user
+        chanels = user.followed_channels
+        return chanels
+    
+class VideoCommentsView(ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = CommentRetrieveSerializer
+
+    def get_queryset(self):
+        id = self.kwargs.get('pk')
+        video = get_object_or_404(Video, id=id)
+        return video.comments 
+        
     

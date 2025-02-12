@@ -65,7 +65,7 @@ class Comment(BaseModel):
 
 class CommentLike(BaseModel):
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, verbose_name='comment', related_name='comment_likes')
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='user', related_name='comment_likes')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, verbose_name='user', related_name='user_comment_likes')
     dislike = models.BooleanField(default=False, verbose_name='dislike')
 
     class Meta:
