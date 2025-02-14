@@ -1,13 +1,14 @@
-from django.shortcuts import render, get_object_or_404
+from .serializers import VideoSerializer, CommentSerializer, CommentCommentSerializer, PlaylistSerializer, CommentRetrieveSerializer, NewPlaylistSerializer, VideoListSerializer, CategoryListSerializer, CategorySerializer
 from rest_framework.generics import DestroyAPIView, UpdateAPIView, RetrieveAPIView, ListAPIView, CreateAPIView
+from .models import Video, Like, Comment, CommentLike, CommentComment, Playlist, View, Category
 from rest_framework.permissions import IsAuthenticated, AllowAny
-from .permissions import IsHasChanel, IsOwner, IsAuthor
-from rest_framework.response import Response
-from apps.accounts.models import Chanel
-from rest_framework.views import APIView
-from .serializers import VideoSerializer, CommentSerializer, CommentCommentSerializer, PlaylistSerializer, CommentRetrieveSerializer
-from .models import Video, Like, Comment, CommentLike, CommentComment, Playlist
 from apps.accounts.serializers import ChanelSmallSerializer
+from .permissions import IsHasChanel, IsOwner, IsAuthor
+from django.shortcuts import render, get_object_or_404
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from apps.accounts.models import Chanel
+from django.db.models import Count
 
 class CreateVideoView(APIView):
     permission_classes = [IsAuthenticated, IsHasChanel]
@@ -49,6 +50,14 @@ class RetrieveVideoView(RetrieveAPIView):
     permission_classes = [AllowAny]
     serializer_class = VideoSerializer
     queryset = Video.objects.all()
+
+    def retrieve(self, request, *args, **kwargs):
+        if request.user.is_authenticated:
+            video = self.get_object()
+            user = request.user
+            view = View.objects.get_or_create(video = video, user = user)
+            view.save()
+        return super().retrieve(request, *args, **kwargs)
 
 class ListVideoView(ListAPIView):
     permission_classes = [AllowAny]
@@ -260,4 +269,59 @@ class VideoCommentsView(ListAPIView):
         video = get_object_or_404(Video, id=id)
         return video.comments 
         
+class PlaylistListApiView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = NewPlaylistSerializer
+
+    def def get_queryset(self):
+        user = self.request.user
+        return Playlist.objects.filter(user=user)
     
+class PlaylistRetrieveApiView(RetrieveAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = PlaylistSerializer
+
+    def get_queryset(self):
+        user = self.request.user 
+        return Playlist.objects.filter(user=user)
+
+class LikedVideosView(ListAPIView):
+    permission_classes = [IsAuthenticated]
+    serializer_class = VideoListSerializer
+
+    def get_queryset(self):
+        user = self.request.user 
+        likes = Like.objects.filter(user=user, dislike=False)
+        return Video.objects.filter(likes__in=likes)
+    
+class CategoryListView(ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = CategoryListSerializer
+    queryset = Category.objects.filter(is_active=True)
+
+class CategoryRetrieveView(RetrieveAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = CategorySerializer
+    queryset = Category.objects.all()
+
+class SearchVideoView(ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = VideoListSerializer
+
+    def get_queryset(self):
+        query = self.kwargs.get('query')
+        return Video.objects.filter(title__icontains=query).order_by('-created_at')
+
+class OrderByTimeView(ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = VideoListSerializer
+
+    def get_queryset(self):
+        return Video.objects.all().order_by('-created_at')
+
+class OrderByviewsView(ListAPIView):
+    permission_classes = [AllowAny]
+    serializer_class = VideoListSerializer  
+
+    def get_queryset(self):
+        return Video.objects.annotate(like_count=Count('likes')).order_by('-like_count')

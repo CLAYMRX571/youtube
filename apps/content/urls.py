@@ -2,7 +2,9 @@ from django.urls import path
 from .views import (CreateVideoView, DeleteVideoView, UpdateVideoView, RetrieveVideoView, 
                     ListVideoView, LikeVideoView, CommentVideoView, DeleteCommentView, CommentCommentView, UpdateCommentView, 
                     LikeCommentView, DeleteCommentCommentView, UpdateCommentCommentView, CreatePlaylistView, DeletePlaylistView, 
-                    AddVideoPlaylistView, RemoveVideoPlaylistView, FollowChanelView, FollowedChanelListView, VideoCommentsView)
+                    AddVideoPlaylistView, RemoveVideoPlaylistView, FollowChanelView, FollowedChanelListView, VideoCommentsView, 
+                    PlaylistListApiView, PlaylistRetrieveApiView, LikedVideosView, CategoryListView, CategoryRetrieveView,
+                    SearchVideoView, OrderByTimeView, OrderByviewsView)
 
 urlpatterns = [
     path('create_video/', CreateVideoView.as_view(), name='create_video'),
@@ -25,4 +27,12 @@ urlpatterns = [
     path('follow_chanel/', FollowChanelView.as_view(), name='follow_chanel'),
     path('followed_chanel/', FollowedChanelListView.as_view(), name='followed_chanel'),
     path('video_comments/<int:pk>', VideoCommentsView.as_view(), name='video_comments'),
+    path('playlist_list/', PlaylistListApiView.as_view(), name='playlist_list'),
+    path('playlist_retrieve/<int:pk>', PlaylistRetrieveApiView.as_view(), name='playlist_retrieve'),
+    path('liked_videos/', LikedVideosView.as_view(), name='liked_videos'),
+    path('category_list/', CategoryListView.as_view(), name='category_list'),
+    path('category_retrieve/<int:pk>,' CategoryRetrieveView.as_view(), name='category_retrieve'),
+    path('search/<str:query>', SearchVideoView.as_view(), name='search'),
+    path('order_by_time/', OrderByTimeView.as_view(), name='order_by_time'),
+    path('order_by_views/', OrderByviewsView.as_view(), name='order_by_views'),
 ]
